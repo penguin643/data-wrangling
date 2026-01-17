@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import time
 import re
+import os
 
 # WSL OPTIONS SETUP
 options = webdriver.ChromeOptions()
@@ -128,10 +129,14 @@ def scrape_judicial_data():
         # Save
         if all_hearing_records:
             df = pd.DataFrame(all_hearing_records)
-            df.to_csv("mumbai_court_history_v2.csv", index=False)
-            print(f"Captured {len(df)} records.")
+            filename = "mumbai_court_master_data.csv"
+            file_exists = os.path.isfile(filename)
+            # Save with 'a' (append) mode
+            df.to_csv(filename, mode="a", index=False, header=not file_exists)
+
+            print(f"\nAppended {len(df)} records to {filename}.")
         else:
-            print("Array empty.")
+            print("No data captured to append.")
 
     finally:
         driver.quit()
