@@ -72,6 +72,38 @@ def scrape_judicial_data():
                     print(f"CNR Extraction failed on case {i+1}: {e}")
                     cnr_val = f"ERROR_ID_{i+1}"
 
+                # MASTER DATA EXTRACTION
+                try:
+                    # 1. Force a wait for the specific TEXT 'Registration Date' to appear
+                    wait.until(lambda d: "Registration Date" in d.page_source)
+                    time.sleep(1)  # Extra 'settle' time for the slow UI
+
+                    # 2. Extract Registration Date with a colon-flexible XPath
+                    reg_label = driver.find_element(
+                        By.XPATH, "//td[contains(., 'Registration Date')]"
+                    )
+                    reg_date_val = reg_label.find_element(
+                        By.XPATH, "./following-sibling::td"
+                    ).text.strip()
+
+                    # 3. Extract Petitioner using a relative search from the section header
+                    pet_section = driver.find_element(
+                        By.XPATH, "//*[contains(text(), 'Petitioner and Advocate')]"
+                    )
+                    # Move to the table cell immediately following the header
+                    pet_cell = pet_section.find_element(By.XPATH, "./following::td[1]")
+                    # Split lines, take the first one, and remove the "1) " prefix
+                    petitioner_val = pet_cell.text.split("\n")[0].split(")")[-1].strip()
+
+                    print(
+                        f"[{i+1}/{num_cases}] MASTER DATA: {petitioner_val} | Registered: {reg_date_val}"
+                    )
+                except Exception as master_err:
+                    print(
+                        f"\nMaster Data Error on case {i+1}: Browser timed out on rendering."
+                    )
+                    petitioner_val, reg_date_val = "Unknown", "Unknown"
+
                 # HISTORY TABLE SCRAPING
                 try:
                     history_section = driver.find_element(
@@ -97,6 +129,8 @@ def scrape_judicial_data():
                                     "business_date": cols[1].text.strip(),
                                     "hearing_date": cols[2].text.strip(),
                                     "purpose": cols[3].text.strip(),
+                                    "petitioner": petitioner_val,
+                                    "registration_date": reg_date_val,
                                 }
                             )
                             case_history_count += 1
