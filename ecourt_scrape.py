@@ -74,11 +74,10 @@ def scrape_judicial_data():
 
                 # MASTER DATA EXTRACTION
                 try:
-                    # 1. Force a wait for the specific TEXT 'Registration Date' to appear
+                    # Force a wait for the specific TEXT 'Registration Date' to appear
                     wait.until(lambda d: "Registration Date" in d.page_source)
                     time.sleep(1)  # Extra 'settle' time for the slow UI
 
-                    # 2. Extract Registration Date with a colon-flexible XPath
                     reg_label = driver.find_element(
                         By.XPATH, "//td[contains(., 'Registration Date')]"
                     )
@@ -86,13 +85,10 @@ def scrape_judicial_data():
                         By.XPATH, "./following-sibling::td"
                     ).text.strip()
 
-                    # 3. Extract Petitioner using a relative search from the section header
                     pet_section = driver.find_element(
                         By.XPATH, "//*[contains(text(), 'Petitioner and Advocate')]"
                     )
-                    # Move to the table cell immediately following the header
                     pet_cell = pet_section.find_element(By.XPATH, "./following::td[1]")
-                    # Split lines, take the first one, and remove the "1) " prefix
                     petitioner_val = pet_cell.text.split("\n")[0].split(")")[-1].strip()
 
                     print(
